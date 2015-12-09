@@ -67,10 +67,6 @@ function plaintemplate(input, options) {
   function currentPosition() {
     return position(line, column) }
 
-  function lastTagString() {
-    var tag = currentTag()
-    return tag.tag[tag.tag.length - 1] }
-
   while(index < length) {
     // Not within a tag.
     if (state === IN_TEXT) {
