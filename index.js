@@ -100,7 +100,7 @@ function plaintemplate(input, options) {
           appendString(input[index])
           advance(1) } } }
     // Within a tag.
-    else if (inTag) {
+    else /* inTag */ {
       // Are we at the end of the tag?
       tag = currentTag()
       if (closeLookahead(index) === options.delimiters.close) {
