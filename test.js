@@ -48,6 +48,22 @@ tape(function(test) {
           { tag: [ 'insert', 'price' ],
             position: { line: 1, column: 26 } } ] } ])
 
+  test.deepEqual(
+    plaintemplate(
+      '{{ if onsale start }}Price: ${{ insert price }}{{ end }}',
+      { delimiters: {
+          open: '{{',
+          close: '}}',
+          start: 'start',
+          end: 'end' } }),
+    [ { tag: [ 'if', 'onsale' ],
+        position: { line: 1, column: 1 },
+        content: [
+          { text: 'Price: $',
+            position: { line: 1, column: 22 } },
+          { tag: [ 'insert', 'price' ],
+            position: { line: 1, column: 30 } } ] } ])
+
   test.throws(
     function() { plaintemplate('This is <% } %> invalid.') },
     /No tag to end at/)
