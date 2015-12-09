@@ -80,8 +80,7 @@ function plaintemplate(input, options) {
           // The `tag` property begins as a string buffer. It is split into
           // space-separated strings when closed.
           tag: '',
-          position: currentPosition(),
-          content: [ ] })
+          position: currentPosition() })
         advance(startLength) }
       // Not at the start of a tag.
       else {
