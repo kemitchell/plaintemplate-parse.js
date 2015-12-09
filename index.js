@@ -2,7 +2,6 @@ module.exports = plaintemplate
 
 var IN_TEXT = 0
 var IN_TAG = 1
-var CONTINUING = 2
 
 var NEWLINE = /^(\n\r?)/
 
@@ -17,8 +16,6 @@ function plaintemplate(input, options) {
 
   var startLength = options.delimiters.start.length
   var endLength = options.delimiters.end.length
-  var continueLength = options.delimiters.continue
-  var completeLength = options.delimiters.complete
 
   var lookahead = (function() {
     var cache = { }
@@ -70,6 +67,10 @@ function plaintemplate(input, options) {
   function currentPosition() {
     return position(line, column) }
 
+  function lastTagString() {
+    var tag = currentTag()
+    return tag.tag[tag.tag.length - 1] }
+
   while(index < length) {
     // Not within a tag.
     if (state === IN_TEXT) {
@@ -101,10 +102,29 @@ function plaintemplate(input, options) {
       // Are we at the end of the tag?
       var tag = currentTag()
       if (endLookahead(index) === options.delimiters.end) {
-        state = IN_TEXT
         // Split the string buffer of tag text into space-separated strings.
         tag.tag = tag.tag.trim().split(/\s+/)
-        advance(endLength) }
+        advance(endLength)
+        var lastString = tag.tag[tag.tag.length - 1]
+        // Start of a continuing tag.
+        if (lastString === options.delimiters.continue) {
+          state = IN_TEXT
+          // Do not include the continue marker.
+          tag.tag.pop()
+          tag.content = [ ]
+          listStack.unshift(tag.content) }
+        // End of a continuing tag.
+        else if (lastString === options.delimiters.complete) {
+          if (listStack.length > 0) {
+            state = IN_TEXT
+            // Do not include a token for the ending tag.
+            currentStack().pop()
+            listStack.shift() }
+          else {
+            throw new Error('Invalid end of tag') } }
+        // End of an insert tag.
+        else {
+          state = IN_TEXT } }
       // Text within the tag.
       else {
         tag.tag = ( tag.tag + input[index])

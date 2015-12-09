@@ -38,4 +38,14 @@ tape(function(test) {
       { text: '?',
         position: { line: 2, column: 26 } } ])
 
+  test.deepEqual(
+    plaintemplate('<% if onsale { %>Price: $<% insert price %><% } %>'),
+    [ { tag: [ 'if', 'onsale' ],
+        position: { line: 1, column: 1 },
+        content: [
+          { text: 'Price: $',
+            position: { line: 1, column: 18 } },
+          { tag: [ 'insert', 'price' ],
+            position: { line: 1, column: 26 } } ] } ])
+
   test.end() })
