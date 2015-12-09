@@ -133,6 +133,15 @@ function plaintemplate(input, delimiters) {
       else {
         tag.tag = ( tag.tag + input[index])
         advance(1) } } }
+  if (contentArrayStack.length > 1) {
+    contentArrayStack.shift()
+    tag = currentTag()
+    error = new Error(
+      'Unclosed tag at ' +
+      'line ' + tag.position.line + ', ' +
+      'column ' + tag.position.column)
+    error.position = tag.position
+    throw error }
   return output }
 
 // Memoize a function that takes a single argument that can be used as keys of

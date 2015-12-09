@@ -69,4 +69,8 @@ tape(function(test) {
     function() { plaintemplate('This is <% } %> invalid.') },
     /No tag to end at line 1, column 9/)
 
+  test.throws(
+    function() { plaintemplate('This is <% if x { %> invalid.') },
+    /Unclosed tag at line 1, column 9/)
+
   test.end() })
