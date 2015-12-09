@@ -1,9 +1,6 @@
 module.exports = plaintemplate
 
-var IN_TEXT = 0
-var IN_TAG = 1
-
-var NEWLINE = /^(\n\r?)/
+var STARTS_WITH_NEWLINE = /^(\n\r?)/
 
 function plaintemplate(input, options) {
   if (options === undefined) {
@@ -25,18 +22,30 @@ function plaintemplate(input, options) {
   var closeLookahead = lookahead(closeLength)
   var newlineLookahead = lookahead(2)
 
+  // The array of tokens to be returned.
   var output = [ ]
-  var listStack = [ output ]
-  var state = IN_TEXT
 
-  var length = input.length
-  var line = 1
-  var column = 1
-  var index = 0
+  // A stack of content arrays, like output.
+  var contentArrayStack = [ output ]
 
+  // The element at index zero is the content array of the current tag, if any.
+  // Subsequent elements are the content arrays of containing tags, and,
+  // finally, `output`.
   function currentStack() {
-    return listStack[0] }
+    return contentArrayStack[0] }
 
+  // The current parser state.
+  var inTag = false
+
+  // Cache the length of the input string.
+  var length = input.length
+
+  // Current parser position information.
+  var index = 0
+  var line = 1 // Begin at 1.
+  var column = 1 // Begin at 1.
+
+  // Append a string to the last text token.
   function appendString(string) {
     var current = currentStack()
     var length = current.length
@@ -49,35 +58,37 @@ function plaintemplate(input, options) {
       text: string,
       position: currentPosition() }) }
 
+  // Returns the last tag token.
   function currentTag() {
     var stack = currentStack()
     return stack[stack.length - 1] }
 
+  // Advances position counters by a certain number of characters.
   function advance(length) {
     index += length
     column += length }
 
+  // Create a position object at the current parser position.
   function currentPosition() {
-    return position(line, column) }
+    return { line: line, column: column } }
 
+  // Iterate through the characters of the input.
   while(index < length) {
     // Not within a tag.
-    if (state === IN_TEXT) {
+    if (!inTag) {
       // Are we at the start of a tag?
       if (openLookahead(index) === options.delimiters.open) {
-        state = IN_TAG
-        currentStack().push({
-          // The `tag` property begins as a string buffer. It is split into
-          // space-separated strings when closed.
-          tag: '',
-          position: currentPosition() })
+        inTag = true
+        // The `tag` property begins as a string buffer. It is split into
+        // space-separated strings when closed.
+        currentStack().push({ tag: '', position: currentPosition() })
         advance(openLength) }
       // Not at the start of a tag.
       else {
         // Is this a newline?
-        var newlineMatch = NEWLINE.exec(newlineLookahead(index))
-        if (newlineMatch) {
-          var newline = newlineMatch[1]
+        var match = STARTS_WITH_NEWLINE.exec(newlineLookahead(index))
+        if (match) {
+          var newline = match[1]
           appendString(newline)
           line++
           column = 1
@@ -87,7 +98,7 @@ function plaintemplate(input, options) {
           appendString(input[index])
           advance(1) } } }
     // Within a tag.
-    else if (state === IN_TAG) {
+    else if (inTag) {
       // Are we at the end of the tag?
       var tag = currentTag()
       if (closeLookahead(index) === options.delimiters.close) {
@@ -97,32 +108,31 @@ function plaintemplate(input, options) {
         var lastString = tag.tag[tag.tag.length - 1]
         // Start of a continuing tag.
         if (lastString === options.delimiters.start) {
-          state = IN_TEXT
+          inTag = false
           // Do not include the start marker.
           tag.tag.pop()
           tag.content = [ ]
-          listStack.unshift(tag.content) }
+          contentArrayStack.unshift(tag.content) }
         // End of a continuing tag.
         else if (lastString === options.delimiters.end) {
-          if (listStack.length > 0) {
-            state = IN_TEXT
+          if (contentArrayStack.length > 0) {
+            inTag = false
             // Do not include a token for the ending tag.
             currentStack().pop()
-            listStack.shift() }
+            contentArrayStack.shift() }
           else {
             throw new Error('Invalid end of tag') } }
         // End of an insert tag.
         else {
-          state = IN_TEXT } }
+          inTag = false } }
       // Text within the tag.
       else {
         tag.tag = ( tag.tag + input[index])
         advance(1) } } }
   return output }
 
-function position(line, column) {
-  return { line: line, column: column } }
-
+// Memoize a function that takes a single argument that can be used as keys of
+// an object.
 function memoize(f) {
   var cache = { }
   return function(argument) {
