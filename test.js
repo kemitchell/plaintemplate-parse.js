@@ -1,11 +1,12 @@
 var tape = require('tape')
 var plaintemplate = require('./')
 
-tape(function(test) {
+tape('plaintemplate-parse', function(test) {
   test.deepEqual(
     plaintemplate('Just text. No templating.'),
     [ { text: 'Just text. No templating.',
-        position: { line: 1, column: 1 } } ])
+        position: { line: 1, column: 1 } } ],
+    'just text')
 
   test.deepEqual(
     plaintemplate('Hello <% insert name %>!'),
@@ -14,7 +15,8 @@ tape(function(test) {
       { tag: 'insert name',
         position: { line: 1, column: 7 } },
       { text: '!',
-        position: { line: 1, column: 24 } } ])
+        position: { line: 1, column: 24 } } ],
+    'insert')
 
   test.deepEqual(
     plaintemplate('Hello <% insert first %> <%insert last%>'),
@@ -25,7 +27,8 @@ tape(function(test) {
       { text: ' ',
         position: { line: 1, column: 25 } },
       { tag: 'insert last',
-        position: { line: 1, column: 26 } } ])
+        position: { line: 1, column: 26 } } ],
+    'two inserts')
 
   test.deepEqual(
     plaintemplate('Hello <% insert name%>!\nHow is <% insert state %>?'),
@@ -38,7 +41,8 @@ tape(function(test) {
       { tag: 'insert state',
         position: { line: 2, column: 8 } },
       { text: '?',
-        position: { line: 2, column: 26 } } ])
+        position: { line: 2, column: 26 } } ],
+    'two lines')
 
   test.deepEqual(
     plaintemplate('<% if onsale { %>Price: $<% insert price %><% } %>'),
@@ -48,7 +52,8 @@ tape(function(test) {
           { text: 'Price: $',
             position: { line: 1, column: 18 } },
           { tag: 'insert price',
-            position: { line: 1, column: 26 } } ] } ])
+            position: { line: 1, column: 26 } } ] } ],
+    'if then insert')
 
   test.deepEqual(
     plaintemplate(
@@ -63,14 +68,17 @@ tape(function(test) {
           { text: 'Price: $',
             position: { line: 1, column: 22 } },
           { tag: 'insert price',
-            position: { line: 1, column: 30 } } ] } ])
+            position: { line: 1, column: 30 } } ] } ],
+    'mustache syntax')
 
   test.throws(
     function() { plaintemplate('This is <% } %> invalid.') },
-    /No tag to end at line 1, column 9/)
+    /No tag to end at line 1, column 9/,
+    'orphan closing tag throws')
 
   test.throws(
     function() { plaintemplate('This is <% if x { %> invalid.') },
-    /Unclosed tag at line 1, column 9/)
+    /Unclosed tag at line 1, column 9/,
+    'orphan opening tag throws')
 
   test.end() })
