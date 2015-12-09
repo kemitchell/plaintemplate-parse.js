@@ -74,10 +74,13 @@ function plaintemplate(input, options) {
       if (startLookahead(index) === options.delimiters.start) {
         state = IN_TAG
         currentStack().push({
+          // The `tag` property begins as a string buffer. It is split into
+          // space-separated strings when closed.
           tag: '',
           position: position(line, column),
           content: [ ] })
         advance(startLength) }
+      // Not at the start of a tag.
       else {
         // Is this a newline?
         var newlineMatch = NEWLINE.exec(newlineLookahead(index))
@@ -91,14 +94,16 @@ function plaintemplate(input, options) {
         else {
           appendString(input[index])
           advance(1) } } }
+    // Within a tag.
     else if (state === IN_TAG) {
       // Are we at the end of the tag?
       var tag = currentTag()
       if (endLookahead(index) === options.delimiters.end) {
         state = IN_TEXT
+        // Split the string buffer of tag text into space-separated strings.
         tag.tag = tag.tag.trim().split(/\s+/)
         advance(endLength) }
-      // Tag text.
+      // Text within the tag.
       else {
         tag.tag = ( tag.tag + input[index])
         advance(1) } } }
