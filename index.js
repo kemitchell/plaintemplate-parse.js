@@ -57,7 +57,7 @@ function plaintemplate(input, options) {
         return } }
     current.push({
       text: string,
-      position: position(line, column) }) }
+      position: currentPosition() }) }
 
   function currentTag() {
     var stack = currentStack()
@@ -66,6 +66,9 @@ function plaintemplate(input, options) {
   function advance(length) {
     index += length
     column += length }
+
+  function currentPosition() {
+    return position(line, column) }
 
   while(index < length) {
     // Not within a tag.
@@ -77,7 +80,7 @@ function plaintemplate(input, options) {
           // The `tag` property begins as a string buffer. It is split into
           // space-separated strings when closed.
           tag: '',
-          position: position(line, column),
+          position: currentPosition(),
           content: [ ] })
         advance(startLength) }
       // Not at the start of a tag.
