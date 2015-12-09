@@ -1,7 +1,7 @@
 module.exports = plaintemplate
 
-var TEXT = 0
-var OPEN = 1
+var IN_TEXT = 0
+var IN_TAG = 1
 var CONTINUING = 2
 
 var NEWLINE = /^(\n\r?)/
@@ -37,36 +37,49 @@ function plaintemplate(input, options) {
 
   var output = [ ]
   var listStack = [ output ]
-  var state = TEXT
+  var state = IN_TEXT
 
   var length = input.length
   var line = 1
   var column = 1
   var index = 0
 
+  function currentStack() {
+    return listStack[0] }
+
   function appendString(string) {
-    var currentStack = listStack[0]
-    var length = currentStack.length
+    var current = currentStack()
+    var length = current.length
     if (length > 0) {
-      var last = currentStack[length - 1]
+      var last = current[length - 1]
       if ('text' in last) {
         last.text = ( last.text + string )
         return } }
-    currentStack.push({
+    current.push({
       text: string,
       position: position(line, column) }) }
 
+  function currentTag() {
+    var stack = currentStack()
+    return stack[stack.length - 1] }
+
+  function advance(length) {
+    index += length
+    column += length }
+
   while(index < length) {
-    if (state === TEXT) {
+    // Not within a tag.
+    if (state === IN_TEXT) {
+      // Are we at the start of a tag?
       if (startLookahead(index) === options.delimiters.start) {
-        state = OPEN
-        listStack[0].push({
+        state = IN_TAG
+        currentStack().push({
           tag: '',
           position: position(line, column),
           content: [ ] })
-        column += startLength
-        index++ }
+        advance(startLength) }
       else {
+        // Is this a newline?
         var newlineMatch = NEWLINE.exec(newlineLookahead(index))
         if (newlineMatch) {
           var newline = newlineMatch[1]
@@ -74,9 +87,21 @@ function plaintemplate(input, options) {
           line++
           column = 1
           index += newline.length }
+        // Just text.
         else {
           appendString(input[index])
-          index++ } } } }
+          advance(1) } } }
+    else if (state === IN_TAG) {
+      // Are we at the end of the tag?
+      var tag = currentTag()
+      if (endLookahead(index) === options.delimiters.end) {
+        state = IN_TEXT
+        tag.tag = tag.tag.trim().split(/\s+/)
+        advance(endLength) }
+      // Tag text.
+      else {
+        tag.tag = ( tag.tag + input[index])
+        advance(1) } } }
   return output }
 
 function position(line, column) {
