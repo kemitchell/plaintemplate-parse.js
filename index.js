@@ -2,17 +2,16 @@ module.exports = plaintemplate
 
 var STARTS_WITH_NEWLINE = /^(\n\r?)/
 
-function plaintemplate(input, options) {
-  if (options === undefined) {
-    options = {
-      delimiters: {
-        open: '<%',
-        close: '%>',
-        start: '{',
-        end: '}' } } }
+function plaintemplate(input, delimiters) {
+  if (delimiters === undefined) {
+    delimiters = {
+      open: '<%',
+      close: '%>',
+      start: '{',
+      end: '}' } }
 
-  var openLength = options.delimiters.open.length
-  var closeLength = options.delimiters.close.length
+  var openLength = delimiters.open.length
+  var closeLength = delimiters.close.length
 
   var lookahead = memoize(function(length) {
     return function(index) {
@@ -79,7 +78,7 @@ function plaintemplate(input, options) {
     // Not within a tag.
     if (!inTag) {
       // Are we at the start of a tag?
-      if (openLookahead(index) === options.delimiters.open) {
+      if (openLookahead(index) === delimiters.open) {
         inTag = true
         // The `tag` property begins as a string buffer. It is split into
         // space-separated strings when closed.
@@ -103,19 +102,19 @@ function plaintemplate(input, options) {
     else /* inTag */ {
       // Are we at the end of the tag?
       tag = currentTag()
-      if (closeLookahead(index) === options.delimiters.close) {
+      if (closeLookahead(index) === delimiters.close) {
         // Split the string buffer of tag text into space-separated strings.
         tag.tag = tag.tag.trim().split(/\s+/)
         lastString = tag.tag[tag.tag.length - 1]
         // Start of a continuing tag.
-        if (lastString === options.delimiters.start) {
+        if (lastString === delimiters.start) {
           inTag = false
           // Do not include the start marker.
           tag.tag.pop()
           tag.content = [ ]
           contentArrayStack.unshift(tag.content) }
         // End of a continuing tag.
-        else if (lastString === options.delimiters.end) {
+        else if (lastString === delimiters.end) {
           if (contentArrayStack.length > 1) {
             inTag = false
             // Do not include a token for the ending tag.

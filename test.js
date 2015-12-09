@@ -53,11 +53,10 @@ tape(function(test) {
   test.deepEqual(
     plaintemplate(
       '{{ if onsale start }}Price: ${{ insert price }}{{ end }}',
-      { delimiters: {
-          open: '{{',
-          close: '}}',
-          start: 'start',
-          end: 'end' } }),
+      { open: '{{',
+        close: '}}',
+        start: 'start',
+        end: 'end' }),
     [ { tag: [ 'if', 'onsale' ],
         position: { line: 1, column: 1 },
         content: [
