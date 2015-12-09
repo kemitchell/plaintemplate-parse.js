@@ -48,4 +48,8 @@ tape(function(test) {
           { tag: [ 'insert', 'price' ],
             position: { line: 1, column: 26 } } ] } ])
 
+  test.throws(
+    function() { plaintemplate('This is <% } %> invalid.') },
+    /No tag to end at/)
+
   test.end() })

@@ -72,7 +72,7 @@ function plaintemplate(input, options) {
   function currentPosition() {
     return { line: line, column: column } }
 
-  var lastString, match, newline, tag
+  var error, lastString, match, newline, position, tag
 
   // Iterate through the characters of the input.
   while(index < length) {
@@ -117,13 +117,19 @@ function plaintemplate(input, options) {
           contentArrayStack.unshift(tag.content) }
         // End of a continuing tag.
         else if (lastString === options.delimiters.end) {
-          if (contentArrayStack.length > 0) {
+          if (contentArrayStack.length > 1) {
             inTag = false
             // Do not include a token for the ending tag.
             currentStack().pop()
             contentArrayStack.shift() }
           else {
-            throw new Error('Invalid end of tag') } }
+            position = currentPosition()
+            error = new Error(
+              'No tag to end at '+
+              'line ' + position.line + ', ' +
+              'column ' + position.column)
+            error.position = position
+            throw error } }
         // End of an insert tag.
         else {
           inTag = false } }
