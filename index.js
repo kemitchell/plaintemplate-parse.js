@@ -72,7 +72,7 @@ function plaintemplate(input, options) {
   function currentPosition() {
     return { line: line, column: column } }
 
-  var error, lastString, match, newline, position, tag
+  var error, lastString, match, newline, tag
 
   // Iterate through the characters of the input.
   while(index < length) {
@@ -106,7 +106,6 @@ function plaintemplate(input, options) {
       if (closeLookahead(index) === options.delimiters.close) {
         // Split the string buffer of tag text into space-separated strings.
         tag.tag = tag.tag.trim().split(/\s+/)
-        advance(closeLength)
         lastString = tag.tag[tag.tag.length - 1]
         // Start of a continuing tag.
         if (lastString === options.delimiters.start) {
@@ -123,16 +122,16 @@ function plaintemplate(input, options) {
             currentStack().pop()
             contentArrayStack.shift() }
           else {
-            position = currentPosition()
             error = new Error(
               'No tag to end at '+
-              'line ' + position.line + ', ' +
-              'column ' + position.column)
-            error.position = position
+              'line ' + tag.position.line + ', ' +
+              'column ' + tag.position.column)
+            error.position = tag.position
             throw error } }
         // End of an insert tag.
         else {
-          inTag = false } }
+          inTag = false }
+        advance(closeLength) }
       // Text within the tag.
       else {
         tag.tag = ( tag.tag + input[index])

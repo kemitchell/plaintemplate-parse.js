@@ -8,11 +8,13 @@ tape(function(test) {
         position: { line: 1, column: 1 } } ])
 
   test.deepEqual(
-    plaintemplate('Hello <% insert name %>'),
+    plaintemplate('Hello <% insert name %>!'),
     [ { text: 'Hello ',
         position: { line: 1, column: 1 } },
       { tag: [ 'insert', 'name' ],
-        position: { line: 1, column: 7 } } ])
+        position: { line: 1, column: 7 } },
+      { text: '!',
+        position: { line: 1, column: 24 } } ])
 
   test.deepEqual(
     plaintemplate('Hello <% insert first %> <%insert last%>'),
@@ -66,6 +68,6 @@ tape(function(test) {
 
   test.throws(
     function() { plaintemplate('This is <% } %> invalid.') },
-    /No tag to end at/)
+    /No tag to end at line 1, column 9/)
 
   test.end() })
