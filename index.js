@@ -72,6 +72,8 @@ function plaintemplate(input, options) {
   function currentPosition() {
     return { line: line, column: column } }
 
+  var lastString, match, newline, tag
+
   // Iterate through the characters of the input.
   while(index < length) {
     // Not within a tag.
@@ -86,9 +88,9 @@ function plaintemplate(input, options) {
       // Not at the start of a tag.
       else {
         // Is this a newline?
-        var match = STARTS_WITH_NEWLINE.exec(newlineLookahead(index))
+        match = STARTS_WITH_NEWLINE.exec(newlineLookahead(index))
         if (match) {
-          var newline = match[1]
+          newline = match[1]
           appendString(newline)
           line++
           column = 1
@@ -100,12 +102,12 @@ function plaintemplate(input, options) {
     // Within a tag.
     else if (inTag) {
       // Are we at the end of the tag?
-      var tag = currentTag()
+      tag = currentTag()
       if (closeLookahead(index) === options.delimiters.close) {
         // Split the string buffer of tag text into space-separated strings.
         tag.tag = tag.tag.trim().split(/\s+/)
         advance(closeLength)
-        var lastString = tag.tag[tag.tag.length - 1]
+        lastString = tag.tag[tag.tag.length - 1]
         // Start of a continuing tag.
         if (lastString === options.delimiters.start) {
           inTag = false
