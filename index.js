@@ -71,7 +71,7 @@ function plaintemplate(input, delimiters) {
   function currentPosition() {
     return { line: line, column: column } }
 
-  var error, lastString, match, newline, tag
+  var error, match, lineBreak, tag
 
   // Iterate through the characters of the input.
   while(index < length) {
@@ -80,8 +80,6 @@ function plaintemplate(input, delimiters) {
       // Are we at the start of a tag?
       if (openLookahead(index) === delimiters.open) {
         inTag = true
-        // The `tag` property begins as a string buffer. It is split into
-        // space-separated strings when closed.
         currentStack().push({ tag: '', position: currentPosition() })
         advance(openLength) }
       // Not at the start of a tag.
@@ -89,11 +87,11 @@ function plaintemplate(input, delimiters) {
         // Is this a newline?
         match = STARTS_WITH_NEWLINE.exec(newlineLookahead(index))
         if (match) {
-          newline = match[1]
-          appendString(newline)
+          lineBreak = match[1]
+          appendString(lineBreak)
           line++
           column = 1
-          index += newline.length }
+          index += lineBreak.length }
         // Just text.
         else {
           appendString(input[index])
@@ -103,20 +101,19 @@ function plaintemplate(input, delimiters) {
       // Are we at the end of the tag?
       tag = currentTag()
       if (closeLookahead(index) === delimiters.close) {
-        // Split the string buffer of tag text into space-separated strings.
-        tag.tag = tag.tag.trim().split(/\s+/)
-        lastString = tag.tag[tag.tag.length - 1]
         // Start of a continuing tag.
-        if (lastString === delimiters.start) {
+        if (endsWith(tag.tag, delimiters.start)) {
           inTag = false
-          // Do not include the start marker.
-          tag.tag.pop()
+          tag.tag = tag.tag
+            .substring(0, tag.tag.lastIndexOf(delimiters.start) - 1)
+            .trim()
           tag.content = [ ]
           contentArrayStack.unshift(tag.content) }
         // End of a continuing tag.
-        else if (lastString === delimiters.end) {
+        else if (endsWith(tag.tag, delimiters.end)) {
           if (contentArrayStack.length > 1) {
             inTag = false
+            tag.tag = tag.tag.trim()
             // Do not include a token for the ending tag.
             currentStack().pop()
             contentArrayStack.shift() }
@@ -129,6 +126,7 @@ function plaintemplate(input, delimiters) {
             throw error } }
         // End of an insert tag.
         else {
+          tag.tag = tag.tag.trim()
           inTag = false }
         advance(closeLength) }
       // Text within the tag.
@@ -148,3 +146,10 @@ function memoize(f) {
       var result = f(argument)
       cache[argument] = result
       return result } } }
+
+function endsWith(string, suffix) {
+  var trimmed = string.trim()
+  var index = trimmed.lastIndexOf(suffix)
+  return (
+    index > -1 &&
+    ( index === trimmed.length - suffix.length ) ) }
