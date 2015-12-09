@@ -21,14 +21,14 @@ function plaintemplate(input, options) {
   var completeLength = options.delimiters.complete
 
   var lookahead = (function() {
-    var lookaheadCache = { }
+    var cache = { }
     return function(length) {
-      if (lookaheadCache[length]) {
-        return lookaheadCache[length] }
+      if (cache[length]) {
+        return cache[length] }
       else {
         var returned = function(index) {
           return input.substr(index, length) }
-        lookaheadCache[length] = returned
+        cache[length] = returned
         return returned } } })()
 
   var startLookahead = lookahead(startLength)
