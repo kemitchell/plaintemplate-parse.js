@@ -9,13 +9,13 @@ function plaintemplate(input, options) {
   if (options === undefined) {
     options = {
       delimiters: {
-        start: '<%',
-        end: '%>',
-        continue: '{',
-        complete: '}' } } }
+        open: '<%',
+        close: '%>',
+        start: '{',
+        end: '}' } } }
 
-  var startLength = options.delimiters.start.length
-  var endLength = options.delimiters.end.length
+  var openLength = options.delimiters.open.length
+  var closeLength = options.delimiters.close.length
 
   var lookahead = (function() {
     var cache = { }
@@ -28,8 +28,8 @@ function plaintemplate(input, options) {
         cache[length] = returned
         return returned } } })()
 
-  var startLookahead = lookahead(startLength)
-  var endLookahead = lookahead(endLength)
+  var openLookahead = lookahead(openLength)
+  var closeLookahead = lookahead(closeLength)
   var newlineLookahead = lookahead(2)
 
   var output = [ ]
@@ -75,14 +75,14 @@ function plaintemplate(input, options) {
     // Not within a tag.
     if (state === IN_TEXT) {
       // Are we at the start of a tag?
-      if (startLookahead(index) === options.delimiters.start) {
+      if (openLookahead(index) === options.delimiters.open) {
         state = IN_TAG
         currentStack().push({
           // The `tag` property begins as a string buffer. It is split into
           // space-separated strings when closed.
           tag: '',
           position: currentPosition() })
-        advance(startLength) }
+        advance(openLength) }
       // Not at the start of a tag.
       else {
         // Is this a newline?
@@ -101,20 +101,20 @@ function plaintemplate(input, options) {
     else if (state === IN_TAG) {
       // Are we at the end of the tag?
       var tag = currentTag()
-      if (endLookahead(index) === options.delimiters.end) {
+      if (closeLookahead(index) === options.delimiters.close) {
         // Split the string buffer of tag text into space-separated strings.
         tag.tag = tag.tag.trim().split(/\s+/)
-        advance(endLength)
+        advance(closeLength)
         var lastString = tag.tag[tag.tag.length - 1]
         // Start of a continuing tag.
-        if (lastString === options.delimiters.continue) {
+        if (lastString === options.delimiters.start) {
           state = IN_TEXT
-          // Do not include the continue marker.
+          // Do not include the start marker.
           tag.tag.pop()
           tag.content = [ ]
           listStack.unshift(tag.content) }
         // End of a continuing tag.
-        else if (lastString === options.delimiters.complete) {
+        else if (lastString === options.delimiters.end) {
           if (listStack.length > 0) {
             state = IN_TEXT
             // Do not include a token for the ending tag.
