@@ -17,16 +17,9 @@ function plaintemplate(input, options) {
   var openLength = options.delimiters.open.length
   var closeLength = options.delimiters.close.length
 
-  var lookahead = (function() {
-    var cache = { }
-    return function(length) {
-      if (cache[length]) {
-        return cache[length] }
-      else {
-        var returned = function(index) {
-          return input.substr(index, length) }
-        cache[length] = returned
-        return returned } } })()
+  var lookahead = memoize(function(length) {
+    return function(index) {
+      return input.substr(index, length) } })
 
   var openLookahead = lookahead(openLength)
   var closeLookahead = lookahead(closeLength)
@@ -129,3 +122,13 @@ function plaintemplate(input, options) {
 
 function position(line, column) {
   return { line: line, column: column } }
+
+function memoize(f) {
+  var cache = { }
+  return function(argument) {
+    if (cache[argument]) {
+      return cache[argument] }
+    else {
+      var result = f(argument)
+      cache[argument] = result
+      return result } } }
