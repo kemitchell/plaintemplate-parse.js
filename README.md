@@ -28,4 +28,4 @@ The package exports a single function returning arrays of token objects for text
     1. `open`, `"<%"` by default
     2. `close`, `"%>"` by default
     3. `start`, `"{"` by default
-    3. `end`, `"}"` by default
+    4. `end`, `"}"` by default
